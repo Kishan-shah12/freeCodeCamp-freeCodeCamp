@@ -35,7 +35,86 @@ Enterprises deploying fleets of autonomous agents face critical operational and 
 
 ## System Architecture & Data Flow Diagrams
 
-### 1. High-Level Control Plane Architecture
+### 1. Interactive Mermaid Architecture Diagram
+
+```mermaid
+flowchart TB
+    subgraph ClientLayer["🌐 CLIENT & SOC ANALYST LAYER"]
+        UI["🖥️ React 18 Enterprise UI<br/>(Fleet Command / Registry / OTEL Explorer / Sovereign Memory)"]
+        WS["⚡ REST API / HTTPS Streaming Ingress"]
+        UI <--> WS
+    end
+
+    subgraph CloudRun["☁️ GOOGLE CLOUD RUN SERVERLESS CONTAINER (:3000)"]
+        subgraph Gateway["1. Zero-Trust Gateway & Ingress Router"]
+            GW_PARSE["🛡️ Null-Safe Payload Deserializer"]
+            GW_RBAC["🔑 RBAC Access Tier Checker<br/>(L1-Public | L2-Internal | L3-Restricted)"]
+            GW_PARSE --> GW_RBAC
+        end
+
+        subgraph ModelArmor["2. Model Armor Defense Pipeline"]
+            MA_INJECT["🔍 Inbound Prompt Injection & Smuggling Detector"]
+            MA_PII["✂️ Deterministic PII Scrubber (SSN, Salary, Card Data)"]
+            MA_DECISION{"⚖️ Policy Verdict"}
+            MA_INJECT --> MA_PII --> MA_DECISION
+        end
+
+        subgraph CoreEngine["3. Resilient Gemini Orchestrator"]
+            GEMINI_PRIMARY["⚡ Primary: gemini-3.6-flash"]
+            GEMINI_FALLBACK1["🔄 Fallback 1: gemini-3.1-flash-lite"]
+            GEMINI_FALLBACK2["🔄 Fallback 2: gemini-flash-latest / 3.7-flash"]
+            GEMINI_PRIMARY -.->|On Error/429| GEMINI_FALLBACK1 -.->|On Error/503| GEMINI_FALLBACK2
+            COT["🧠 Chain-of-Thought Reasoning & Tool Dispatcher"]
+            GEMINI_PRIMARY --> COT
+        end
+
+        subgraph Observability["4. OpenTelemetry Distributed Tracing"]
+            OTEL["📊 Trace & Span Collector<br/>(Gateway ➔ ModelArmor ➔ Gemini ➔ Tools)"]
+        end
+
+        subgraph Quarantine["5. Dead-Letter Queue (DLQ)"]
+            DLQ["🚨 Security Incident Quarantine & Audit Alert"]
+        end
+
+        WS --> GW_PARSE
+        GW_RBAC --> MA_INJECT
+
+        MA_DECISION -->|BLOCK_SECURITY_VIOLATION| DLQ
+        MA_DECISION -->|ALLOW / REDACT_AND_ALLOW| GEMINI_PRIMARY
+        
+        COT --> OTEL
+        DLQ --> OTEL
+    end
+
+    subgraph StorageLayer["🗄️ PERSISTENCE & DATA SOVEREIGNTY"]
+        subgraph Firestore["🔥 Cloud Firestore (Owner-Bound Rules)"]
+            FS_INTERACT["/users/{userId}/interactions"]
+            FS_AUDIT["/security_audit_logs"]
+        end
+
+        subgraph CloudSQL["🐘 Cloud SQL Sovereign Vector Store"]
+            SQL_US["🇺🇸 us-central1 Partition (768-dim)"]
+            SQL_EU["🇪🇺 europe-west3 GDPR Partition (768-dim)"]
+            SQL_ASIA["🇯🇵 asia-east1 Sovereign Partition (768-dim)"]
+        end
+
+        subgraph SecretMgr["🔐 GCP Secret Manager"]
+            SECRETS["🔑 GEMINI_API_KEY (IAM Secret Accessor)"]
+        end
+    end
+
+    SecretMgr -.->|Dynamic Key Injection| CloudRun
+    OTEL --> FS_INTERACT
+    OTEL --> FS_AUDIT
+    COT <--> SQL_US
+    COT <--> SQL_EU
+    COT <--> SQL_ASIA
+    OTEL --> UI
+```
+
+---
+
+### 2. High-Level Control Plane ASCII Architecture
 
 ```
                                   +-------------------------------------------------------------+
