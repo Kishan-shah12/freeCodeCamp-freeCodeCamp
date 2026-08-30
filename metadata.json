@@ -1,0 +1,7 @@
+{
+  "name": "AegisFleet OS — Fortified Enterprise Agent Grid",
+  "description": "Enterprise-grade Zero-Trust Agent Control Plane, Model Armor Security Interceptor, Red Team Simulator, and OpenTelemetry Distributed Observability Platform powered by Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
